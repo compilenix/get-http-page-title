@@ -78,6 +78,7 @@ function handleRequest (req, res) {
       if (title === undefined) {
         res.statusCode = 500
       }
+      console.dir(title)
       res.end(title)
     }
   }
