@@ -42,6 +42,10 @@ async function getTitleFromIncomingMessage (clientRes, res) {
       try {
         const $ = cheerio.load(rawData)
         const title = $('title').text().trim().replace(/\n/, '').replace(/ {2}/g, '')
+        res.setHeader('content-type', 'text/plain')
+        res.setHeader('content-length', title.length)
+        res.setHeader('cache-control', 'public, max-age=3600000')
+        res.setHeader('access-control-allow-origin', '*')
         res.statusCode = 200
         clientRes.destroy()
         resolve(title)
