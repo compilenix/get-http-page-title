@@ -87,11 +87,15 @@ function handleRequest (req, res) {
     res.end()
   }
 
+  const schema = clientRequest.slice(0, 5)
+
   let title = ''
-  if (clientRequest.startsWith('http://')) {
-    http.get(clientRequest, handleClientRequest).on('error', handleClientRequestError)
-  } else if (clientRequest.startsWith('https://')) {
-    https.get(clientRequest, handleClientRequest).on('error', handleClientRequestError)
+  if (schema === 'http/') {
+    const hostPlusRest = clientRequest.slice(5)
+    http.get(`http://${hostPlusRest}`, handleClientRequest).on('error', handleClientRequestError)
+  } else if (schema === 'https') {
+    const hostPlusRest = clientRequest.slice(6)
+    https.get(`https://${hostPlusRest}`, handleClientRequest).on('error', handleClientRequestError)
   } else {
     res.statusCode = 400
     res.end()
