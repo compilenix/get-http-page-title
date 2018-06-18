@@ -24,7 +24,7 @@ async function getTitleFromIncomingMessage (clientRes, res) {
       res.statusCode = 400
       clientRes.resume()
       clientRes.destroy()
-      resolve('')
+      resolve('no title')
     }
 
     let rawData = ''
@@ -41,7 +41,17 @@ async function getTitleFromIncomingMessage (clientRes, res) {
     clientRes.on('end', () => {
       try {
         const $ = cheerio.load(rawData)
-        const title = $('title').text().trim().replace(/\n/, '').replace(/ {2}/g, '')
+        const firstTitleElement = $('title').first()
+        if (firstTitleElement.length === 0) {
+          res.setHeader('content-type', 'text/plain')
+          res.setHeader('cache-control', 'no-cache')
+          res.setHeader('access-control-allow-origin', '*')
+          res.statusCode = 200
+          clientRes.destroy()
+          resolve('no title')
+          return
+        }
+        const title = firstTitleElement.text().trim().replace(/\n/, '').replace(/ {2}/g, '')
         res.setHeader('content-type', 'text/plain')
         res.setHeader('cache-control', 'no-cache')
         res.setHeader('access-control-allow-origin', '*')
