@@ -10,6 +10,13 @@
             "name": "Launch Program",
             "program": "${workspaceFolder}/index.js",
             "runtimeExecutable": "${workspaceRoot}/node.sh"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Test",
+            "program": "${workspaceFolder}/tests/issue-2-wrong-title.js",
+            "runtimeExecutable": "${workspaceRoot}/node.sh"
         }
     ]
 }
