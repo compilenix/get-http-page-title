@@ -1,0 +1,4 @@
+[submodule "http-content-encoding"]
+  path = src/http-content-encoding
+  url = https://git.compilenix.org/Compilenix/js-http-content-encoding.git
+
