@@ -1,7 +1,11 @@
 {
   "name": "get-http-page-title",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://git.compilenix.org/Compilenix/get-http-page-title"
+  },
   "main": "index.js",
   "scripts": {
     "start": "./node.sh index.js",
