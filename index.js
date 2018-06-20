@@ -15,6 +15,90 @@ const config = require('./config.js')
 const package_json = require('./package.json')
 
 /**
+ * @param {http.ServerResponse} res
+ * @param {http.IncomingMessage} clientRes
+ */
+async function handleClientRequest (res, clientRes) {
+  clientRes = await tryFollowRedirects(res, clientRes)
+  if (!clientRes) return
+  const title = await getTitleFromIncomingMessage(clientRes, res)
+  if (title === undefined) {
+    res.statusCode = 500
+  }
+  console.dir(title)
+  res.end(title)
+}
+
+/**
+ * @param {http.ServerResponse} res
+ * @param {Error} error
+ */
+function handleClientRequestError (res, error) {
+  console.log(error)
+  res.statusCode = 500
+  res.end()
+}
+
+/**
+ * @param {URL} url
+ * @returns {http.RequestOptions}
+ */
+function generateClientRequestOptions (url) {
+  return {
+    timeout: 3000,
+    protocol: url.protocol,
+    method: 'GET',
+    host: url.host,
+    headers: {
+      'User-Agent': `${package_json.name}/${package_json.version} (${package_json.repository.url})`,
+      'Accept': 'text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.1',
+      'Accept-Language': config.preferredLanguage,
+      'Accept-Encoding': 'gzip, deflate, identity;q=0.2, *;q=0',
+      'From': config.adminContact // See: https://tools.ietf.org/html/rfc7231#section-5.5.1
+    },
+    hostname: url.hostname,
+    path: `${url.pathname}${url.search}`
+  }
+}
+
+/**
+ * @param {http.ServerResponse} response
+ * @param {http.IncomingMessage} clientRes
+ * @returns {Promise<http.IncomingMessage>}
+ */
+async function tryFollowRedirects (response, clientRes, levelOfRecursion = 0) {
+  return new Promise((resolve, reject) => {
+    if (clientRes.statusCode < 300 || clientRes.statusCode >= 400) return resolve(clientRes)
+    if (!clientRes.headers || !clientRes.headers['location']) return resolve(clientRes)
+    if (levelOfRecursion >= 30) return resolve(clientRes)
+
+    const url = new URL(clientRes.headers['location'])
+    if (url.protocol === 'http:') {
+      http.get(generateClientRequestOptions(new URL(clientRes.headers['location'])), async res => {
+        resolve(await tryFollowRedirects(response, res, ++levelOfRecursion))
+      })
+        .on('error', err => {
+          handleClientRequestError(response, err)
+          resolve()
+        })
+    } else if (url.protocol === 'https:') {
+      https.get(generateClientRequestOptions(new URL(clientRes.headers['location'])), async res => {
+        resolve(await tryFollowRedirects(response, res, ++levelOfRecursion))
+      })
+        .on('error', err => {
+          handleClientRequestError(response, err)
+          resolve()
+        })
+    } else {
+      console.log(`Unsupported protocol in redirect to ${clientRes.headers['location']}`)
+      response.statusCode = 500
+      response.end()
+      resolve()
+    }
+  })
+}
+
+/**
  * @param {http.IncomingMessage} clientRes
  * @param {http.ServerResponse} res
  * @returns {Promise<string>}
@@ -82,27 +166,6 @@ function handleRequest (req, res) {
   const clientRequest = req.url.slice(1)
   console.dir(clientRequest)
 
-  /**
-  * @param {http.IncomingMessage} clientRes
-  */
-  async function handleClientRequest (clientRes) {
-    title = await getTitleFromIncomingMessage(clientRes, res)
-    if (title === undefined) {
-      res.statusCode = 500
-    }
-    console.dir(title)
-    res.end(title)
-  }
-
-  /**
-  * @param {Error} error
-  */
-  function handleClientRequestError (error) {
-    console.log(error)
-    res.statusCode = 500
-    res.end()
-  }
-
   let schema = clientRequest.slice(0, 5)
   let hostPlusRest = ''
   if (schema === 'http/') {
@@ -114,31 +177,16 @@ function handleRequest (req, res) {
   }
 
   let url = new URL(`${schema}://${hostPlusRest}`)
-  let requestOptions = {
-    timeout: 3000,
-    protocol: url.protocol,
-    href: url.href,
-    method: 'GET',
-    host: url.host,
-    headers: {
-      'User-Agent': `${package_json.name}/${package_json.version} (${package_json.repository.url})`,
-      'Accept': 'text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.1',
-      'Accept-Language': config.preferredLanguage,
-      'Accept-Encoding': 'gzip, deflate, identity;q=0.2, *;q=0',
-      'From': config.adminContact // See: https://tools.ietf.org/html/rfc7231#section-5.5.1
-    },
-    hostname: url.hostname,
-    pathname: url.pathname,
-    path: `${url.pathname}${url.search}`,
-    search: url.search,
-    hash: url.hash
-  }
+  let requestOptions = generateClientRequestOptions(url)
 
-  let title = ''
   if (schema === 'http') {
-    http.get(requestOptions, handleClientRequest).on('error', handleClientRequestError)
+    http.get(requestOptions, async clientRes => {
+      await handleClientRequest(res, clientRes)
+    }).on('error', err => handleClientRequestError(res, err))
   } else if (schema === 'https') {
-    https.get(requestOptions, handleClientRequest).on('error', handleClientRequestError)
+    https.get(requestOptions, async clientRes => {
+      await handleClientRequest(res, clientRes)
+    }).on('error', err => handleClientRequestError(res, err))
   } else {
     res.statusCode = 400
     res.end()
