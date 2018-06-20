@@ -202,6 +202,10 @@ function handleRequest (req, res) {
     res.end()
   }
 
+  const argv = process.execArgv.join();
+  const isDebug = argv.includes('inspect') || argv.includes('debug')
+  if (isDebug) return
+
   setTimeout(() => {
     res.statusCode = 504
     res.statusMessage = 'Gateway Timeout'
