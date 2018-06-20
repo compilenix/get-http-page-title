@@ -200,6 +200,12 @@ function handleRequest (req, res) {
     res.statusCode = 400
     res.end()
   }
+
+  setTimeout(() => {
+    res.statusCode = 504
+    res.statusMessage = 'Gateway Timeout'
+    res.end('Gateway Timeout')
+  }, 3000)
 }
 
 http.createServer(handleRequest).listen(config.port)
