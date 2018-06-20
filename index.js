@@ -44,7 +44,8 @@ function handleClientRequestError (res, error) {
   }
   console.log(error)
   res.statusCode = 500
-  res.end()
+  res.statusMessage = error.message
+  res.end(error.message)
 }
 
 /**
