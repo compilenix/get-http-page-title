@@ -70,7 +70,7 @@ async function tryFollowRedirects (response, clientRes, levelOfRecursion = 0) {
   return new Promise((resolve, reject) => {
     if (clientRes.statusCode < 300 || clientRes.statusCode >= 400) return resolve(clientRes)
     if (!clientRes.headers || !clientRes.headers['location']) return resolve(clientRes)
-    if (levelOfRecursion >= 30) return resolve(clientRes)
+    if (levelOfRecursion >= config.maxRedirects) return resolve(clientRes)
 
     const url = new URL(clientRes.headers['location'])
     if (url.protocol === 'http:') {
@@ -112,6 +112,7 @@ async function getTitleFromIncomingMessage (clientRes, res) {
       clientRes.destroy()
       resolve('no title')
     }
+    if (clientRes.statusCode >= 300 || clientRes.statusCode < 400) return resolve(`Reached max redirects of ${config.maxRedirects}`)
 
     let rawData = Buffer.alloc(0)
     clientRes.on('data', chunk => {
