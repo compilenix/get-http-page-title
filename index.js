@@ -112,7 +112,7 @@ async function getTitleFromIncomingMessage (clientRes, res) {
       clientRes.destroy()
       resolve('no title')
     }
-    if (clientRes.statusCode >= 300 || clientRes.statusCode < 400) return resolve(`Reached max redirects of ${config.maxRedirects}`)
+    if (clientRes.statusCode >= 300 && clientRes.statusCode < 400) return resolve(`Reached max redirects of ${config.maxRedirects}`)
 
     let rawData = Buffer.alloc(0)
     clientRes.on('data', chunk => {
