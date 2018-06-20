@@ -34,6 +34,14 @@ async function handleClientRequest (res, clientRes) {
  * @param {Error} error
  */
 function handleClientRequestError (res, error) {
+  const errorCode = error.code
+  switch (errorCode) {
+    case 'ENOTFOUND':
+      res.end()
+      return
+    default:
+      break
+  }
   console.log(error)
   res.statusCode = 500
   res.end()
