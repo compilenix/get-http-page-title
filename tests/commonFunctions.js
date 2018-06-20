@@ -1,12 +1,14 @@
+module.exports.doesResponseBodyMatch = doesResponseBodyMatch
 const http = require('http') // eslint-disable-line no-unused-vars
 
 let config = require('../config.js')
 
 /**
  * @param {http.IncomingMessage} res
+ * @param {string} exactMatchString
  * @returns {Promise<boolean>}
  */
-module.exports.doesResponseBodyMatch = async (res, exactMatchString) => {
+async function doesResponseBodyMatch (res, exactMatchString) {
   return new Promise((resolve, reject) => {
     res.setEncoding('utf8')
     if (res.statusCode !== 200) {
