@@ -1,6 +1,7 @@
 const http = require('http')
 const https = require('https')
 const os = require('os')
+const { URL: Url } = require('url')
 
 const fs = require('fs-extra')
 const cheerio = require('cheerio')
@@ -186,7 +187,7 @@ function handleRequest (req, res) {
     schema = 'https'
   }
 
-  let url = new URL(`${schema}://${hostPlusRest}`)
+  let url = new Url(`${schema}://${hostPlusRest}`)
   let requestOptions = generateClientRequestOptions(url)
 
   if (schema === 'http') {
