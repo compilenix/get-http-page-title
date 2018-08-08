@@ -108,5 +108,69 @@ function handleDockerHub (url, res) {
   return false
 }
 
-module.exports.handleDockerHub = handleDockerHub
+/**
+ * @param {string} url
+ * @param {http.ServerResponse} res
+ * @returns {boolean}
+ */
+function handleOsquery_io (url, res) {
+  if (url.length <= 5) return false
+
+  const isHomePage = url.match(/^https?:\/\/osquery\.io\/?$/i)
+  const isSchemaPage = url.match(/^https?:\/\/osquery\.io\/schema\/?$/i)
+  const isOfficialNewsPage = url.match(/^https?:\/\/osquery\.io\/blog\/official-news\/?$/i)
+  const isBlogPage = url.match(/^https?:\/\/osquery\.io\/blog\/?/i)
+
+  if (
+    isHomePage === null &&
+    isSchemaPage === null &&
+    isOfficialNewsPage === null &&
+    isBlogPage === null
+  ) return false
+
+  if (isHomePage !== null) {
+    res.setHeader('content-type', 'text/plain')
+    res.setHeader('cache-control', 'public, must-revalidate')
+    res.setHeader('access-control-allow-origin', '*')
+    res.statusMessage = `OK`
+    res.statusCode = 200
+    res.end(`osquery | Easily ask questions about your Linux, Windows, and macOS infrastructure`)
+    return true
+  }
+
+  if (isSchemaPage !== null) {
+    res.setHeader('content-type', 'text/plain')
+    res.setHeader('cache-control', 'public, must-revalidate')
+    res.setHeader('access-control-allow-origin', '*')
+    res.statusMessage = `OK`
+    res.statusCode = 200
+    res.end(`osquery | Schema`)
+    return true
+  }
+
+  if (isOfficialNewsPage !== null) {
+    res.setHeader('content-type', 'text/plain')
+    res.setHeader('cache-control', 'public, must-revalidate')
+    res.setHeader('access-control-allow-origin', '*')
+    res.statusMessage = `OK`
+    res.statusCode = 200
+    res.end(`osquery | Official News`)
+    return true
+  }
+
+  if (isBlogPage !== null) {
+    res.setHeader('content-type', 'text/plain')
+    res.setHeader('cache-control', 'public, must-revalidate')
+    res.setHeader('access-control-allow-origin', '*')
+    res.statusMessage = `OK`
+    res.statusCode = 200
+    res.end(`osquery | Blog`)
+    return true
+  }
+
+  return false
+}
+
 module.exports.getTitleFromIncomingMessage = getTitleFromIncomingMessage
+module.exports.handleDockerHub = handleDockerHub
+module.exports.handleOsquery_io = handleOsquery_io

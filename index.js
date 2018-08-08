@@ -5,7 +5,7 @@ const { URL: Url } = require('url')
 
 const fs = require('fs-extra')
 
-const { handleDockerHub, getTitleFromIncomingMessage } = require('./commonFunctions.js')
+const { getTitleFromIncomingMessage, handleDockerHub, handleOsquery_io } = require('./commonFunctions.js')
 
 if (!fs.existsSync('./config.js')) {
   fs.copySync('./config.example.js', './config.js')
@@ -135,6 +135,7 @@ function handleRequest (req, res) {
   let url = new Url(urlString)
 
   if (handleDockerHub(urlString, res)) return
+  if (handleOsquery_io(urlString, res)) return
 
   let requestOptions = generateClientRequestOptions(url)
 
