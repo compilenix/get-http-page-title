@@ -214,5 +214,13 @@ function handleRequest (req, res) {
   }, 3000)
 }
 
-http.createServer(handleRequest).listen(config.port)
+/**
+ * @param {http.IncomingMessage} request
+ * @param {http.ServerResponse} response
+ */
+function handleApiRequestNextTick (request, response) {
+  process.nextTick(() => handleRequest(request, response))
+}
+
+http.createServer(handleApiRequestNextTick).listen(config.port)
 console.log(`http://${os.hostname()}:${config.port}/`)
