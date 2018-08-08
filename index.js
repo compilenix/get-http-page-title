@@ -60,7 +60,7 @@ function generateClientRequestOptions (url) {
     method: 'GET',
     host: url.host,
     headers: {
-      'User-Agent': `${package_json.name}/${package_json.version} (${package_json.repository.url})`,
+      'User-Agent': `${package_json.name}/${package_json.version} (${package_json.repository.url}) admin contact: ${config.adminContact}`,
       'Accept': 'text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.1',
       'Accept-Language': config.preferredLanguage,
       'Accept-Encoding': 'gzip, deflate, identity;q=0.2, *;q=0',
