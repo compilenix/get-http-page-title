@@ -4,9 +4,8 @@ const os = require('os')
 const { URL: Url } = require('url')
 
 const fs = require('fs-extra')
-const cheerio = require('cheerio')
 
-const contentEncoding = require('./src/http-content-encoding')
+const { handleDockerHub, getTitleFromIncomingMessage } = require('./commonFunctions.js')
 
 if (!fs.existsSync('./config.js')) {
   fs.copySync('./config.example.js', './config.js')
@@ -109,62 +108,6 @@ async function tryFollowRedirects (response, clientRes, levelOfRecursion = 0) {
 }
 
 /**
- * @param {http.IncomingMessage} clientRes
- * @param {http.ServerResponse} res
- * @returns {Promise<string>}
- */
-async function getTitleFromIncomingMessage (clientRes, res) {
-  return new Promise((resolve, reject) => {
-    const contentType = clientRes.headers['content-type'] ? clientRes.headers['content-type'].toLowerCase() : undefined
-    if (!contentType || !(contentType.startsWith('application/html') || contentType.startsWith('text/html'))) {
-      res.statusCode = 400
-      clientRes.resume()
-      clientRes.destroy()
-      resolve('no title')
-    }
-    if (clientRes.statusCode >= 300 && clientRes.statusCode < 400) return resolve(`Reached max redirects of ${config.maxRedirects}`)
-
-    let rawData = Buffer.alloc(0)
-    clientRes.on('data', chunk => {
-      if (chunk.length + rawData.length < config.maxPayloadSize) {
-        rawData = Buffer.concat([rawData, Buffer.from(chunk)])
-      } else {
-        res.statusCode = 413
-        res.statusMessage = 'Response entity too large'
-        clientRes.destroy()
-        resolve('')
-      }
-    })
-
-    clientRes.on('end', async () => {
-      try {
-        const decoded = await contentEncoding.tryDecodeHttpResponse(clientRes, rawData)
-        const decodedBodyAsString = decoded.body.toString('utf8')
-        const $ = cheerio.load(decodedBodyAsString)
-        const firstTitleElement = $('title').first()
-        let title = ''
-
-        clientRes.destroy()
-        res.setHeader('content-type', 'text/plain')
-        res.setHeader('cache-control', 'no-cache')
-        res.setHeader('access-control-allow-origin', '*')
-        res.statusCode = 200
-
-        if (firstTitleElement.length === 0) {
-          title = 'no title'
-        } else {
-          title = firstTitleElement.text().trim().replace(/\n/, '').replace(/ {2}/g, '')
-        }
-
-        resolve(title)
-      } catch (e) {
-        resolve()
-      }
-    })
-  })
-}
-
-/**
  * @param {http.IncomingMessage} req
  * @param {http.ServerResponse} res
  */
@@ -174,6 +117,7 @@ function handleRequest (req, res) {
     res.end()
     return
   }
+
   const clientRequest = req.url.slice(1)
   console.dir(clientRequest)
 
@@ -187,7 +131,11 @@ function handleRequest (req, res) {
     schema = 'https'
   }
 
-  let url = new Url(`${schema}://${hostPlusRest}`)
+  let urlString = `${schema}://${hostPlusRest}`
+  let url = new Url(urlString)
+
+  if (handleDockerHub(urlString, res)) return
+
   let requestOptions = generateClientRequestOptions(url)
 
   if (schema === 'http') {
@@ -203,7 +151,7 @@ function handleRequest (req, res) {
     res.end()
   }
 
-  const argv = process.execArgv.join();
+  const argv = process.execArgv.join()
   const isDebug = argv.includes('inspect') || argv.includes('debug')
   if (isDebug) return
 
