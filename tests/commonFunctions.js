@@ -1,4 +1,3 @@
-module.exports.doesResponseBodyMatch = doesResponseBodyMatch
 const http = require('http') // eslint-disable-line no-unused-vars
 
 let config = require('../config.js')
@@ -44,3 +43,5 @@ async function doesResponseBodyMatch (res, exactMatchString) {
     })
   })
 }
+
+module.exports.doesResponseBodyMatch = doesResponseBodyMatch
