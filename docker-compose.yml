@@ -1,0 +1,10 @@
+version: '2.1'
+
+services:
+  get-http-page-title:
+    image: get-http-page-title
+    build: .
+    environment:
+      NODE_ENV: production
+    ports:
+      - 6643:6643
