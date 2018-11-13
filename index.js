@@ -16,6 +16,41 @@ const config = require('./config.js')
 // @ts-ignore
 const packageJson = require('./package.json')
 
+const envOverwrides = [
+  {
+    name: 'port',
+    valueType: 'number'
+  }, {
+    name: 'maxPayloadSize',
+    valueType: 'number'
+  }, {
+    name: 'adminContact',
+    valueType: 'string'
+  }, {
+    name: 'preferredLanguage',
+    valueType: 'string'
+  }, {
+    name: 'maxRedirects',
+    valueType: 'number'
+  } ]
+
+for (let index = 0; index < envOverwrides.length; index++) {
+  const envOverwride = envOverwrides[index]
+
+  if (process.env[envOverwride.name]) {
+    switch (envOverwride.valueType) {
+      case 'number':
+        config[envOverwride.name] = Number.parseInt(process.env[envOverwride.name])
+        break
+      case 'string':
+        config[envOverwride.name] = process.env[envOverwride.name]
+        break
+      default:
+        break
+    }
+  }
+}
+
 /**
  * @param {http.ServerResponse} res
  * @param {http.IncomingMessage} clientRes

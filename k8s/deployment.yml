@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: get-http-page-title
+  labels:
+    app: get-http-page-title
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: get-http-page-title
+  template:
+    metadata:
+      labels:
+        app: get-http-page-title
+    spec:
+      terminationGracePeriodSeconds: 1
+      containers:
+      - name: get-http-page-title
+        image: container-registry.wbig-wg.net/compilenix/get-http-page-title:latest
+        resources:
+          requests:
+            cpu: 500m
+            memory: 50Mi
+        ports:
+        - containerPort: 6643
+          protocol: TCP
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /health
+            port: 6643
+            scheme: HTTP
+          initialDelaySeconds: 1
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 5
+        env:
+        - name: Port
+          value: "6643"
+        - name: maxPayloadSize
+          value: "1000000"
+        - name: preferredLanguage
+          value: en;q=0.9, de;q=0.5, *;q=0.3
+        - name: maxRedirects
+          value: "30"

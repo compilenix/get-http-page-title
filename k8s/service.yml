@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: get-http-page-title
+  labels:
+    app: get-http-page-title
+spec:
+  selector:
+    app: get-http-page-title
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 6643
+  type: LoadBalancer
