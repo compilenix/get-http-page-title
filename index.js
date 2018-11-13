@@ -114,6 +114,13 @@ async function tryFollowRedirects (response, clientRes, levelOfRecursion = 0) {
  */
 function handleRequest (req, res) {
   try {
+    if (req.url === '/health') {
+      res.statusCode = 200
+      res.statusMessage = 'OK'
+      res.end('Healthy')
+      return
+    }
+
     res.statusCode = 400
     if (req.method !== 'GET') {
       res.end()
