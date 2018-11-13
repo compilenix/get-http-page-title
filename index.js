@@ -5,6 +5,7 @@ const { URL: Url } = require('url')
 
 const fs = require('fs-extra')
 
+// eslint-disable-next-line camelcase
 const { getTitleFromIncomingMessage, handleDockerHub, handleOsquery_io } = require('./commonFunctions.js')
 
 if (!fs.existsSync('./config.js')) {
@@ -12,7 +13,8 @@ if (!fs.existsSync('./config.js')) {
 }
 
 const config = require('./config.js')
-const package_json = require('./package.json')
+// @ts-ignore
+const packageJson = require('./package.json')
 
 /**
  * @param {http.ServerResponse} res
@@ -34,8 +36,7 @@ async function handleClientRequest (res, clientRes) {
  * @param {Error} error
  */
 function handleClientRequestError (res, error) {
-  const errorCode = error.code
-  switch (errorCode) {
+  switch (error.name) {
     case 'ENOTFOUND':
       res.end()
       return
@@ -59,7 +60,7 @@ function generateClientRequestOptions (url) {
     method: 'GET',
     host: url.host,
     headers: {
-      'User-Agent': `${package_json.name}/${package_json.version} (${package_json.repository.url}) admin contact: ${config.adminContact}`,
+      'User-Agent': `${packageJson.name}/${packageJson.version} (${packageJson.repository.url}) admin contact: ${config.adminContact}`,
       'Accept': 'text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.1',
       'Accept-Language': config.preferredLanguage,
       'Accept-Encoding': 'gzip, deflate, identity;q=0.2, *;q=0',
@@ -112,55 +113,59 @@ async function tryFollowRedirects (response, clientRes, levelOfRecursion = 0) {
  * @param {http.ServerResponse} res
  */
 function handleRequest (req, res) {
-  res.statusCode = 400
-  if (req.method !== 'GET') {
-    res.end()
-    return
-  }
-
-  const clientRequest = req.url.slice(1)
-  console.dir(clientRequest)
-
-  let schema = clientRequest.slice(0, 5)
-  let hostPlusRest = ''
-  if (schema === 'http/') {
-    hostPlusRest = clientRequest.slice(5)
-    schema = 'http'
-  } else if (schema === 'https') {
-    hostPlusRest = clientRequest.slice(6)
-    schema = 'https'
-  }
-
-  let urlString = `${schema}://${hostPlusRest}`
-  let url = new Url(urlString)
-
-  if (handleDockerHub(urlString, res)) return
-  if (handleOsquery_io(urlString, res)) return
-
-  let requestOptions = generateClientRequestOptions(url)
-
-  if (schema === 'http') {
-    http.get(requestOptions, async clientRes => {
-      await handleClientRequest(res, clientRes)
-    }).on('error', err => handleClientRequestError(res, err))
-  } else if (schema === 'https') {
-    https.get(requestOptions, async clientRes => {
-      await handleClientRequest(res, clientRes)
-    }).on('error', err => handleClientRequestError(res, err))
-  } else {
+  try {
     res.statusCode = 400
-    res.end()
+    if (req.method !== 'GET') {
+      res.end()
+      return
+    }
+
+    const clientRequest = req.url.slice(1)
+    console.dir(clientRequest)
+
+    let schema = clientRequest.slice(0, 5)
+    let hostPlusRest = ''
+    if (schema === 'http/') {
+      hostPlusRest = clientRequest.slice(5)
+      schema = 'http'
+    } else if (schema === 'https') {
+      hostPlusRest = clientRequest.slice(6)
+      schema = 'https'
+    }
+
+    let urlString = `${schema}://${hostPlusRest}`
+    let url = new Url(urlString)
+
+    if (handleDockerHub(urlString, res)) return
+    if (handleOsquery_io(urlString, res)) return
+
+    let requestOptions = generateClientRequestOptions(url)
+
+    if (schema === 'http') {
+      http.get(requestOptions, async clientRes => {
+        await handleClientRequest(res, clientRes)
+      }).on('error', err => handleClientRequestError(res, err))
+    } else if (schema === 'https') {
+      https.get(requestOptions, async clientRes => {
+        await handleClientRequest(res, clientRes)
+      }).on('error', err => handleClientRequestError(res, err))
+    } else {
+      res.statusCode = 400
+      res.end()
+    }
+
+    const argv = process.execArgv.join()
+    const isDebug = argv.includes('inspect') || argv.includes('debug')
+    if (isDebug) return
+
+    setTimeout(() => {
+      res.statusCode = 504
+      res.statusMessage = 'Gateway Timeout'
+      res.end('Gateway Timeout')
+    }, 3000)
+  } catch (error) {
+    handleClientRequestError(res, error)
   }
-
-  const argv = process.execArgv.join()
-  const isDebug = argv.includes('inspect') || argv.includes('debug')
-  if (isDebug) return
-
-  setTimeout(() => {
-    res.statusCode = 504
-    res.statusMessage = 'Gateway Timeout'
-    res.end('Gateway Timeout')
-  }, 3000)
 }
 
 /**
