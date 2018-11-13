@@ -122,7 +122,7 @@ function handleRequest (req, res) {
     }
 
     res.statusCode = 400
-    if (req.method !== 'GET') {
+    if (req.method !== 'GET' || !req.url || !req.url.startsWith('/http')) {
       res.end()
       return
     }
