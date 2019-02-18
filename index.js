@@ -102,7 +102,9 @@ function generateClientRequestOptions (url) {
       'From': config.adminContact // See: https://tools.ietf.org/html/rfc7231#section-5.5.1
     },
     hostname: url.hostname,
-    path: `${url.pathname}${url.search}`
+    path: `${url.pathname}${url.search}`,
+    // @ts-ignore
+    rejectUnauthorized: config.rejectUnauthorizedSsl
   }
 }
 
