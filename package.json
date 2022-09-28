@@ -10,7 +10,9 @@
   "scripts": {
     "start": "./node.sh index.js",
     "clean": "rm -rf node_modules",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "npm run snyk-protect",
+    "snyk-protect": "snyk-protect"
   },
   "keywords": [
     "http",
@@ -20,7 +22,8 @@
   "license": "MIT",
   "dependencies": {
     "cheerio": "^1.0.0-rc.3",
-    "fs-extra": "^8.1.0"
+    "fs-extra": "^8.1.0",
+    "@snyk/protect": "latest"
   },
   "devDependencies": {
     "eslint-config-standard": "^14.0.1",
@@ -30,5 +33,6 @@
     "eslint-plugin-standard": "^4.0.1",
     "standard": "^14.0.2",
     "@types/node": "^10.14.16"
-  }
+  },
+  "snyk": true
 }
